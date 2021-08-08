@@ -34,10 +34,6 @@ type AuthServerSession struct {
 
 // AuthMsg1 is the first message in the authentication protocol. It is sent from
 // the client to the server.
-//
-// Users of package opaque does not need to read nor write to the A or DhPub
-// field fields in this struct except to serialize and deserialize the struct
-// when it's sent between the peers in the authentication protocol.
 type AuthMsg1 struct {
 	Username string
 	A *ECPoint
@@ -47,10 +43,6 @@ type AuthMsg1 struct {
 
 // AuthMsg2 is the second message in the authentication protocol. It is sent
 // from the server to the client.
-//
-// Users of package opaque does not need to read nor write to any fields in this
-// struct except to serialize and deserialize the struct when it's sent between
-// the peers in the authentication protocol.
 type AuthMsg2 struct {
 	// k below is the salt.
 	// b=a^k
@@ -87,13 +79,6 @@ type AuthMsg3 struct {
 // Auth1 is the processing done by the server when it receives an AuthMsg1
 // struct. On success a nil error is returned together with a AuthServerSession
 // and an AuthMsg2 struct. The AuthMsg2 struct should be sent to the client.
-//
-// privS is the server's private RSA key. It can be the same for all users. The
-// user argument needs to be created by the server (e.g., by looking it up based
-// on msg1.Username).
-//
-// A non-nil error is returned on failure.
-//
 func Auth1(privS *ECPrivateKey, user *User, msg1 AuthMsg1) (*AuthServerSession, AuthMsg2, error) {
 	var err error
 	var sk []byte
@@ -102,7 +87,7 @@ func Auth1(privS *ECPrivateKey, user *User, msg1 AuthMsg1) (*AuthServerSession, 
 	if err != nil {
 		return nil, AuthMsg2{}, err
 	}
-	var EPrivS = ECPrivateKey{PrivKeyBytes: sk}
+	var EPrivateS = ECPrivateKey{PrivateKeyBytes: sk}
 	var EPubS = ECPubKey{PubKeyPoint: &ECPoint{X: x, Y: y}}
 
 	var msg2 AuthMsg2
@@ -114,11 +99,12 @@ func Auth1(privS *ECPrivateKey, user *User, msg1 AuthMsg1) (*AuthServerSession, 
 	msg2.EphemeralPubS = &EPubS
 
 	NonceS := make([]byte, 32)
-	msg2.NonceS = NonceS
 	if _, err := io.ReadFull(rand.Reader, NonceS); err != nil {
 		panic(err.Error())
 	}
+	msg2.NonceS = NonceS[:]
 
+	//XCrypt is a message for signing
 	var XCrypt = append(msg1.A.X.Bytes(), msg1.A.Y.Bytes()...)
 	XCrypt = append(XCrypt, msg1.NonceU...)
 	XCrypt = append(XCrypt, []byte(msg1.Username)...)
@@ -131,6 +117,7 @@ func Auth1(privS *ECPrivateKey, user *User, msg1 AuthMsg1) (*AuthServerSession, 
 	XCrypt = append(XCrypt, EPubS.PubKeyPoint.X.Bytes()...)
 	XCrypt = append(XCrypt, EPubS.PubKeyPoint.Y.Bytes()...)
 
+	//Prepare common secret: session key, key for mac etc
 	var info = append([]byte("HMQVKeys"), msg1.NonceU...)
 	info = append(info, NonceS...)
 	info = append(info, []byte(msg1.Username)...)
@@ -147,8 +134,8 @@ func Auth1(privS *ECPrivateKey, user *User, msg1 AuthMsg1) (*AuthServerSession, 
 	var Q2 = sha256.Sum256(Q2Input)
 
 	var Q1Num = new(big.Int).SetBytes(Q1[:])
-	var EPrivSNum = new(big.Int).SetBytes(EPrivS.PrivKeyBytes[:])
-	var PrivSNum = new(big.Int).SetBytes(privS.PrivKeyBytes[:])
+	var EPrivSNum = new(big.Int).SetBytes(EPrivateS.PrivateKeyBytes[:])
+	var PrivSNum = new(big.Int).SetBytes(privS.PrivateKeyBytes[:])
 
 	var exp = big.NewInt(0).Add(EPrivSNum, big.NewInt(1).Mul(Q1Num, PrivSNum)).Bytes()
 
@@ -191,7 +178,7 @@ func Auth1(privS *ECPrivateKey, user *User, msg1 AuthMsg1) (*AuthServerSession, 
 		NonceU: msg1.NonceU,
 		NonceS: NonceS,
 
-		EphemeralPrivS: &EPrivS,
+		EphemeralPrivS: &EPrivateS,
 		EphemeralPubS: &EPubS,
 
 		user: user,

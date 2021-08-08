@@ -21,7 +21,6 @@ func Write(w *bufio.Writer, data []byte) error {
 	if err := w.Flush(); err != nil {
 		return err
 	}
-
 	return nil
 }
 

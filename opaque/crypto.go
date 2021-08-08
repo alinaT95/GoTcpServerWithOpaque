@@ -6,16 +6,14 @@
 package opaque
 
 import (
-	"crypto"
 	"crypto/elliptic"
-	"crypto/rand"
 	"crypto/sha256"
 	"hash"
 	"math/big"
 )
 
 type ECPrivateKey struct {
-	PrivKeyBytes []byte
+	PrivateKeyBytes []byte
 }
 
 type ECPoint struct {
@@ -23,19 +21,17 @@ type ECPoint struct {
 	Y *big.Int
 }
 
-
 type ECPubKey struct {
 	PubKeyPoint *ECPoint
 }
-
-
-var randr = rand.Reader
 
 // This hash function is used as H from the I-D.
 func hasher() hash.Hash {
 	return sha256.New()
 }
 
-var hasherId = crypto.SHA256
-
 var dhGroup = elliptic.P256()
+
+func GetDhGroup() elliptic.Curve {
+	return dhGroup
+}

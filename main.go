@@ -19,12 +19,11 @@ import (
 )
 
 
-
-
 // Server's EC key pair.
-var p256 = elliptic.P256()
+var p256 = opaque.GetDhGroup()
 var privS opaque.ECPrivateKey
 var pubS opaque.ECPubKey
+
 
 // Map usernames to users.
 var users = map[string]*opaque.User{}
@@ -41,7 +40,7 @@ func main() {
 	var sk []byte
 	var x, y *big.Int
 	sk, x, y, err = elliptic.GenerateKey(p256, rand.Reader)
-	privS = opaque.ECPrivateKey{PrivKeyBytes: sk}
+	privS = opaque.ECPrivateKey{PrivateKeyBytes: sk}
 	pubS = opaque.ECPubKey{PubKeyPoint: &opaque.ECPoint{X: x, Y: y}}
 
 	if err != nil {
@@ -68,7 +67,7 @@ func handleConn(conn net.Conn) {
 	defer conn.Close()
 	fmt.Printf("Got connection from %s\n", conn.RemoteAddr())
 	if err := doHandleConn(conn); err != nil {
-		fmt.Printf("doHandleConn: %s\n", err)
+		fmt.Printf("Error happened in handleConn: %s\n", err)
 	}
 }
 
@@ -91,7 +90,6 @@ func doHandleConn(conn net.Conn) error {
 	default:
 		return fmt.Errorf("Unknown command '%s'\n", string(cmd))
 	}
-
 	return nil
 }
 
@@ -138,7 +136,11 @@ func handleAuth(r *bufio.Reader, w *bufio.Writer) error {
 		return err
 	}
 
-	key := sharedSecret[:16]
+	fmt.Printf(string((sharedSecret)))
+
+	fmt.Printf("Authentication finished!")
+
+	/*key := sharedSecret[:16]
 	toClient := "Hi client!"
 	fmt.Printf("Sending '%s'\n", toClient)
 	if err := opaque.EncryptAndWrite(w, key, toClient); err != nil {
@@ -148,7 +150,7 @@ func handleAuth(r *bufio.Reader, w *bufio.Writer) error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("Received '%s'\n", plaintext)
+	fmt.Printf("Received '%s'\n", plaintext)*/
 	return nil
 }
 
@@ -188,5 +190,8 @@ func handlePwReg(r *bufio.Reader, w *bufio.Writer) error {
 	}
 	fmt.Printf("Added user '%s'\n", user.Username)
 	users[user.Username] = user
+
+	fmt.Printf("Registration finished!")
+
 	return nil
 }

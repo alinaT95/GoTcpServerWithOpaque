@@ -23,15 +23,12 @@ func generateSalt() (k *big.Int, err error) {
 
 // dhOprf2 is the second step in computing DH-OPRF. dhOprf2 is executed on the
 // server.
-//
 // From the I-D:
 //     S: upon receiving a value a, respond with b=a^k
-//
 // k is used a salt when the password is hashed.
 func dhOprf2(a *ECPoint, k *big.Int) (b *ECPoint, err error) {
-	// From I-D: All received values (a, b, v) are checked to be non-unit
+	// From I-D: All received values (a, b) are checked to be non-unit
 	// elements in G.
-	//
 	// First check that a is in Z^*_p.
 	if !dhGroup.IsOnCurve(a.X, a.Y) {
 		return nil,  errors.New("a is not in elliptic curve")
@@ -40,9 +37,7 @@ func dhOprf2(a *ECPoint, k *big.Int) (b *ECPoint, err error) {
 	/*if dhGroup.IsInSmallSubgroup(a) {
 		return nil, nil, errors.New("a is in a small subgroup")
 	}*/
-
 	var xB, yB = dhGroup.ScalarMult(a.X, a.Y, k.Bytes())
-
 	return &ECPoint{X: xB, Y: yB}, nil
 }
 
