@@ -27,6 +27,7 @@ func Write(w *bufio.Writer, data []byte) error {
 func Read(r *bufio.Reader) ([]byte, error) {
 	fmt.Print("< ")
 	data, err := r.ReadBytes('\n')
+	fmt.Printf(string(len(data)))
 	if err != nil {
 		return nil, err
 	}

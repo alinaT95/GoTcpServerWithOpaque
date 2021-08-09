@@ -29,6 +29,7 @@ var pubS opaque.ECPubKey
 var users = map[string]*opaque.User{}
 
 func main() {
+	fmt.Printf("Start server...")
 	flag.Usage = func() {
 		fmt.Fprintf(flag.CommandLine.Output(), "%s is a simple example server of the opaque package. It can be used together with cmd/client.\nUsage:\n", os.Args[0])
 		flag.PrintDefaults()
@@ -73,10 +74,13 @@ func handleConn(conn net.Conn) {
 
 func doHandleConn(conn net.Conn) error {
 	r := bufio.NewReader(conn)
+	fmt.Printf("Start connection handling...")
 	cmd, err := opaque.Read(r)
 	if err != nil {
 		return err
 	}
+	fmt.Printf("Start connection handling1... \n")
+	fmt.Printf("command = " + string(cmd) + "\n")
 	w := bufio.NewWriter(conn)
 	switch string(cmd) {
 	case "pwreg":
@@ -155,15 +159,20 @@ func handleAuth(r *bufio.Reader, w *bufio.Writer) error {
 }
 
 func handlePwReg(r *bufio.Reader, w *bufio.Writer) error {
+	fmt.Printf("handlePwReg:")
 	data1, err := opaque.Read(r)
+	fmt.Printf(string(len(data1)))
 	if err != nil {
 		return err
 	}
 	var msg1 opaque.PwRegMsg1
+	fmt.Printf(string(data1))
+
+	fmt.Printf("!!!!!!!!")
 	if err := json.Unmarshal(data1, &msg1); err != nil {
 		return err
 	}
-	session, msg2, err := opaque.PwReg(&pubS, msg1)
+	/*session, msg2, err := opaque.PwReg(&pubS, msg1)
 	if err != nil {
 		return err
 	}
@@ -190,7 +199,7 @@ func handlePwReg(r *bufio.Reader, w *bufio.Writer) error {
 	}
 	fmt.Printf("Added user '%s'\n", user.Username)
 	users[user.Username] = user
-
+*/
 	fmt.Printf("Registration finished!")
 
 	return nil
