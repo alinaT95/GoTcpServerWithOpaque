@@ -12,7 +12,38 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
+	"strings"
 )
+
+func RemoveQuotesFromJson(json string) string {
+	var flag = true
+	var jsonTransformed = json
+	for {
+		var index = strings.Index(jsonTransformed, "x\":\"")
+		fmt.Println(index)
+
+		var stringToReplace = "x\":\""
+		if (index == -1) {
+
+			index = strings.Index(jsonTransformed, "y\":\"")
+			stringToReplace = "y\":\""
+			if (index == -1) {
+				flag = false
+			}
+		}
+		if !flag {
+			break
+		}
+		jsonTransformed = removeQuote(jsonTransformed, index)
+		jsonTransformed = strings.Replace(jsonTransformed, stringToReplace, stringToReplace[0:len(stringToReplace) - 1], 1)
+	}
+	return jsonTransformed
+}
+
+func removeQuote(json string, startInd int) string{
+	var indOfQuote = strings.Index(json[startInd+4: len(json)], "\"")
+	return json[0: startInd + 4 + indOfQuote] +  json[startInd + 4 + indOfQuote + 1: len(json)]
+}
 
 func Write(w *bufio.Writer, data []byte) error {
 	fmt.Printf("> %s\n", string(data))

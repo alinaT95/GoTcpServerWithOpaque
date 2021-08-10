@@ -97,7 +97,24 @@ func doHandleConn(conn net.Conn) error {
 	return nil
 }
 
+type BigInt struct {
+	big.Int
+}
+
+func (i *BigInt) UnmarshalJSON(b []byte) error {
+	var val string
+	err := json.Unmarshal(b, &val)
+	if err != nil {
+		return err
+	}
+
+	i.SetString(val, 10)
+
+	return nil
+}
+
 func handleAuth(r *bufio.Reader, w *bufio.Writer) error {
+
 	data1, err := opaque.Read(r)
 	if err != nil {
 		return err
@@ -166,12 +183,14 @@ func handlePwReg(r *bufio.Reader, w *bufio.Writer) error {
 		return err
 	}
 	var msg1 opaque.PwRegMsg1
-	fmt.Printf(string(data1))
+	fmt.Printf("%d", len(data1))
 
-	fmt.Printf("!!!!!!!!")
-	if err := json.Unmarshal(data1, &msg1); err != nil {
+	if err := json.Unmarshal([]byte(opaque.RemoveQuotesFromJson(string(data1))), &msg1); err != nil {
 		return err
 	}
+
+	fmt.Printf(msg1.A.X.String())
+
 	/*session, msg2, err := opaque.PwReg(&pubS, msg1)
 	if err != nil {
 		return err
