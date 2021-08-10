@@ -114,20 +114,31 @@ func (i *BigInt) UnmarshalJSON(b []byte) error {
 }
 
 func handleAuth(r *bufio.Reader, w *bufio.Writer) error {
-
+	fmt.Println("handleAuth:")
 	data1, err := opaque.Read(r)
 	if err != nil {
 		return err
 	}
+	fmt.Println(string(data1))
+
 	var msg1 opaque.AuthMsg1
-	if err := json.Unmarshal(data1, &msg1); err != nil {
+	if err := json.Unmarshal([]byte(opaque.RemoveQuotesFromJson(string(data1))), &msg1); err != nil {
 		return err
 	}
+
+	fmt.Println(msg1.A.X.String())
+
+
 	user, ok := users[msg1.Username]
 	if !ok {
+		if err := opaque.Write(w, []byte("No such user")); err != nil {
+			return err
+		}
 		return fmt.Errorf("No such user")
 	}
-	session, msg2, err := opaque.Auth1(&privS, user, msg1)
+	fmt.Println(user)
+
+	/*session, msg2, err := opaque.Auth1(&privS, user, msg1)
 	if err != nil {
 		return err
 	}
@@ -172,6 +183,9 @@ func handleAuth(r *bufio.Reader, w *bufio.Writer) error {
 		return err
 	}
 	fmt.Printf("Received '%s'\n", plaintext)*/
+
+	fmt.Printf("Authentication finished!")
+
 	return nil
 }
 

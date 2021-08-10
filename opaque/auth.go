@@ -10,12 +10,12 @@ import (
 	"crypto/hmac"
 	"crypto/rand"
 	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
+	"golang.org/x/crypto/hkdf"
 	"io"
 	"math/big"
-
-	"golang.org/x/crypto/hkdf"
 )
 
 // AuthServerSession keeps track of state needed on the server-side during a
@@ -24,8 +24,8 @@ type AuthServerSession struct {
 	SK []byte
 	Km2 []byte
 	Km3 []byte
-	NonceU []byte
-	NonceS []byte
+	NonceU string
+	NonceS string
 	EphemeralPrivS *ECPrivateKey
 	EphemeralPubS *ECPoint
 	user *User
@@ -37,7 +37,7 @@ type AuthServerSession struct {
 type AuthMsg1 struct {
 	Username string
 	A *ECPoint
-	NonceU []byte
+	NonceU string //hex
 	EphemeralPubU *ECPoint
 }
 
@@ -102,6 +102,7 @@ func Auth1(privS *ECPrivateKey, user *User, msg1 AuthMsg1) (*AuthServerSession, 
 	if _, err := io.ReadFull(rand.Reader, NonceS); err != nil {
 		panic(err.Error())
 	}
+
 	msg2.NonceS = NonceS[:]
 
 	//XCrypt is a message for signing
@@ -170,13 +171,15 @@ func Auth1(privS *ECPrivateKey, user *User, msg1 AuthMsg1) (*AuthServerSession, 
 	var mac1 = computeHMac(Km3, XCrypt)
 	msg2.Mac1 = mac1
 
+	var NonceSHexStr =hex.EncodeToString(NonceS)
+
 	session := &AuthServerSession{
 		SK: SK,
 		Km2: Km2,
 		Km3: Km3,
 
 		NonceU: msg1.NonceU,
-		NonceS: NonceS,
+		NonceS: NonceSHexStr,
 
 		EphemeralPrivS: &EPrivateS,
 		EphemeralPubS: &EPubS,
