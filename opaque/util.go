@@ -15,12 +15,16 @@ import (
 	"strings"
 )
 
+type Point struct {
+	X string
+	Y string
+}
+
 func RemoveQuotesFromJson(json string) string {
 	var flag = true
 	var jsonTransformed = json
 	for {
 		var index = strings.Index(jsonTransformed, "x\":\"")
-		fmt.Println(index)
 
 		var stringToReplace = "x\":\""
 		if (index == -1) {
@@ -58,7 +62,6 @@ func Write(w *bufio.Writer, data []byte) error {
 func Read(r *bufio.Reader) ([]byte, error) {
 	fmt.Print("< ")
 	data, err := r.ReadBytes('\n')
-	fmt.Printf(string(len(data)))
 	if err != nil {
 		return nil, err
 	}

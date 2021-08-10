@@ -22,7 +22,7 @@ import (
 // Server's EC key pair.
 var p256 = opaque.GetDhGroup()
 var privS opaque.ECPrivateKey
-var pubS opaque.ECPubKey
+var pubS opaque.ECPoint
 
 
 // Map usernames to users.
@@ -42,7 +42,7 @@ func main() {
 	var x, y *big.Int
 	sk, x, y, err = elliptic.GenerateKey(p256, rand.Reader)
 	privS = opaque.ECPrivateKey{PrivateKeyBytes: sk}
-	pubS = opaque.ECPubKey{PubKeyPoint: &opaque.ECPoint{X: x, Y: y}}
+	pubS = opaque.ECPoint{X: x, Y: y}
 
 	if err != nil {
 		panic(err)
@@ -176,27 +176,33 @@ func handleAuth(r *bufio.Reader, w *bufio.Writer) error {
 }
 
 func handlePwReg(r *bufio.Reader, w *bufio.Writer) error {
-	fmt.Printf("handlePwReg:")
+	fmt.Println("handlePwReg:")
 	data1, err := opaque.Read(r)
-	fmt.Printf(string(len(data1)))
 	if err != nil {
 		return err
 	}
 	var msg1 opaque.PwRegMsg1
-	fmt.Printf("%d", len(data1))
+
 
 	if err := json.Unmarshal([]byte(opaque.RemoveQuotesFromJson(string(data1))), &msg1); err != nil {
 		return err
 	}
 
-	fmt.Printf(msg1.A.X.String())
+	fmt.Println(msg1.A.X.String())
 
-	/*session, msg2, err := opaque.PwReg(&pubS, msg1)
+	session, msg2, err := opaque.PwReg(&pubS, msg1)
+
+
+	fmt.Println(msg2.B.X)
+	fmt.Println(session)
+
 	if err != nil {
 		return err
 	}
 
 	data2, err := json.Marshal(msg2)
+	fmt.Println(string(data2))
+
 	if err != nil {
 		return err
 	}
@@ -208,17 +214,22 @@ func handlePwReg(r *bufio.Reader, w *bufio.Writer) error {
 	if err != nil {
 		return err
 	}
+
+	fmt.Println(string(data3))
 	var msg3 opaque.PwRegMsg3
-	if err := json.Unmarshal(data3, &msg3); err != nil {
+	if err := json.Unmarshal([]byte(opaque.RemoveQuotesFromJson(string(data3))), &msg3); err != nil {
 		return err
 	}
+
 	user := opaque.PwReg3(session, msg3)
-	if err := opaque.Write(w, []byte("ok")); err != nil {
+	if err := opaque.Write(w, []byte("Msg from Server: Registration finished!")); err != nil {
 		return err
 	}
 	fmt.Printf("Added user '%s'\n", user.Username)
 	users[user.Username] = user
-*/
+
+	fmt.Println(len(users))
+
 	fmt.Printf("Registration finished!")
 
 	return nil

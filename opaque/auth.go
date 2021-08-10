@@ -27,7 +27,7 @@ type AuthServerSession struct {
 	NonceU []byte
 	NonceS []byte
 	EphemeralPrivS *ECPrivateKey
-	EphemeralPubS *ECPubKey
+	EphemeralPubS *ECPoint
 	user *User
 	XCrypt []byte
 }
@@ -38,7 +38,7 @@ type AuthMsg1 struct {
 	Username string
 	A *ECPoint
 	NonceU []byte
-	EphemeralPubU *ECPubKey
+	EphemeralPubU *ECPoint
 }
 
 // AuthMsg2 is the second message in the authentication protocol. It is sent
@@ -50,9 +50,9 @@ type AuthMsg2 struct {
 
 	// EnvU contains data encrypted by the client which is stored
 	// server-side.
-	EnvU []byte
+	EnvU string
 
-	EphemeralPubS *ECPubKey
+	EphemeralPubS *ECPoint
 
 	NonceS []byte
 
@@ -88,7 +88,7 @@ func Auth1(privS *ECPrivateKey, user *User, msg1 AuthMsg1) (*AuthServerSession, 
 		return nil, AuthMsg2{}, err
 	}
 	var EPrivateS = ECPrivateKey{PrivateKeyBytes: sk}
-	var EPubS = ECPubKey{PubKeyPoint: &ECPoint{X: x, Y: y}}
+	var EPubS = ECPoint{X: x, Y: y}
 
 	var msg2 AuthMsg2
 	msg2.B, err = dhOprf2(msg1.A, user.K)
@@ -108,25 +108,25 @@ func Auth1(privS *ECPrivateKey, user *User, msg1 AuthMsg1) (*AuthServerSession, 
 	var XCrypt = append(msg1.A.X.Bytes(), msg1.A.Y.Bytes()...)
 	XCrypt = append(XCrypt, msg1.NonceU...)
 	XCrypt = append(XCrypt, []byte(msg1.Username)...)
-	XCrypt = append(XCrypt, msg1.EphemeralPubU.PubKeyPoint.X.Bytes()...)
-	XCrypt = append(XCrypt, msg1.EphemeralPubU.PubKeyPoint.Y.Bytes()...)
+	XCrypt = append(XCrypt, msg1.EphemeralPubU.X.Bytes()...)
+	XCrypt = append(XCrypt, msg1.EphemeralPubU.Y.Bytes()...)
 	XCrypt = append(XCrypt, msg2.B.X.Bytes()...)
 	XCrypt = append(XCrypt, msg2.B.Y.Bytes()...)
 	XCrypt = append(XCrypt, msg2.EnvU...)
 	XCrypt = append(XCrypt, NonceS...)
-	XCrypt = append(XCrypt, EPubS.PubKeyPoint.X.Bytes()...)
-	XCrypt = append(XCrypt, EPubS.PubKeyPoint.Y.Bytes()...)
+	XCrypt = append(XCrypt, EPubS.X.Bytes()...)
+	XCrypt = append(XCrypt, EPubS.Y.Bytes()...)
 
 	//Prepare common secret: session key, key for mac etc
 	var info = append([]byte("HMQVKeys"), msg1.NonceU...)
 	info = append(info, NonceS...)
 	info = append(info, []byte(msg1.Username)...)
 
-	var Q1Input = append(msg1.EphemeralPubU.PubKeyPoint.X.Bytes(), msg1.EphemeralPubU.PubKeyPoint.Y.Bytes()...)
+	var Q1Input = append(msg1.EphemeralPubU.X.Bytes(), msg1.EphemeralPubU.Y.Bytes()...)
 	Q1Input = append(Q1Input, []byte("user")...)
 	Q1Input = append(Q1Input, info...)
 
-	var Q2Input = append(EPubS.PubKeyPoint.X.Bytes(), EPubS.PubKeyPoint.Y.Bytes()...)
+	var Q2Input = append(EPubS.X.Bytes(), EPubS.Y.Bytes()...)
 	Q2Input = append(Q2Input, []byte("srvr")...)
 	Q2Input = append(Q2Input, info...)
 
@@ -139,8 +139,8 @@ func Auth1(privS *ECPrivateKey, user *User, msg1 AuthMsg1) (*AuthServerSession, 
 
 	var exp = big.NewInt(0).Add(EPrivSNum, big.NewInt(1).Mul(Q1Num, PrivSNum)).Bytes()
 
-	var xPubUQ2, yPubUQ2 = dhGroup.ScalarMult(user.PubU.PubKeyPoint.X, user.PubU.PubKeyPoint.Y, Q2[:])
-	var xSum, ySum = dhGroup.Add(EPubS.PubKeyPoint.X, EPubS.PubKeyPoint.Y, xPubUQ2, yPubUQ2)
+	var xPubUQ2, yPubUQ2 = dhGroup.ScalarMult(user.PubU.X, user.PubU.Y, Q2[:])
+	var xSum, ySum = dhGroup.Add(EPubS.X, EPubS.Y, xPubUQ2, yPubUQ2)
 	var xIkms, yIkms = dhGroup.ScalarMult(xSum, ySum, exp)
 	var secret = append(xIkms.Bytes(), yIkms.Bytes()...)
 

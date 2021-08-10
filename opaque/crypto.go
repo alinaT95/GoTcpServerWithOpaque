@@ -21,10 +21,6 @@ type ECPoint struct {
 	Y *big.Int
 }
 
-type ECPubKey struct {
-	PubKeyPoint *ECPoint
-}
-
 // This hash function is used as H from the I-D.
 func hasher() hash.Hash {
 	return sha256.New()
