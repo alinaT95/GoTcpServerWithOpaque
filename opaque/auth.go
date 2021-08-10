@@ -46,17 +46,17 @@ type AuthMsg1 struct {
 type AuthMsg2 struct {
 	// k below is the salt.
 	// b=a^k
-	B *ECPoint
+	B *Point
 
 	// EnvU contains data encrypted by the client which is stored
 	// server-side.
 	EnvU string
 
-	EphemeralPubS *ECPoint
+	EphemeralPubS *Point
 
-	NonceS []byte
+	NonceS string
 
-	Mac1 []byte
+	Mac1 string
 }
 
 // After receiving AuthMsg2 client can compute RwdU as H(x, v, b*v^{-r}).
@@ -91,28 +91,33 @@ func Auth1(privS *ECPrivateKey, user *User, msg1 AuthMsg1) (*AuthServerSession, 
 	var EPubS = ECPoint{X: x, Y: y}
 
 	var msg2 AuthMsg2
-	msg2.B, err = dhOprf2(msg1.A, user.K)
-	if err != nil {
+	var B, err1 = dhOprf2(msg1.A, user.K)
+	if err1 != nil {
 		return nil, AuthMsg2{}, err
 	}
+	msg2.B =  &Point{X: B.X.String(), Y: B.Y.String()}
 	msg2.EnvU = user.EnvU
-	msg2.EphemeralPubS = &EPubS
+	msg2.EphemeralPubS =  &Point{X: EPubS.X.String(), Y: EPubS.Y.String()}
 
 	NonceS := make([]byte, 32)
 	if _, err := io.ReadFull(rand.Reader, NonceS); err != nil {
 		panic(err.Error())
 	}
 
-	msg2.NonceS = NonceS[:]
+	msg2.NonceS = hex.EncodeToString(NonceS[:])
 
 	//XCrypt is a message for signing
+
+	fmt.Println(len(msg1.A.X.Bytes()))
+	fmt.Println(len(msg1.A.Y.Bytes()))
+
 	var XCrypt = append(msg1.A.X.Bytes(), msg1.A.Y.Bytes()...)
 	XCrypt = append(XCrypt, msg1.NonceU...)
 	XCrypt = append(XCrypt, []byte(msg1.Username)...)
 	XCrypt = append(XCrypt, msg1.EphemeralPubU.X.Bytes()...)
 	XCrypt = append(XCrypt, msg1.EphemeralPubU.Y.Bytes()...)
-	XCrypt = append(XCrypt, msg2.B.X.Bytes()...)
-	XCrypt = append(XCrypt, msg2.B.Y.Bytes()...)
+	XCrypt = append(XCrypt, B.X.Bytes()...)
+	XCrypt = append(XCrypt, B.Y.Bytes()...)
 	XCrypt = append(XCrypt, msg2.EnvU...)
 	XCrypt = append(XCrypt, NonceS...)
 	XCrypt = append(XCrypt, EPubS.X.Bytes()...)
@@ -152,38 +157,39 @@ func Auth1(privS *ECPrivateKey, user *User, msg1 AuthMsg1) (*AuthServerSession, 
 		panic(err)
 	}
 
-	fmt.Println(SK)
+	fmt.Println("SK = ")
+	fmt.Println( hex.EncodeToString(SK))
 
 	var Km2 = make([]byte, 32)
 	if _, err := io.ReadFull(kdf, Km2); err != nil {
 		panic(err)
 	}
 
-	fmt.Println(Km2)
+	fmt.Println("Km2 = ")
+	fmt.Println( hex.EncodeToString(Km2))
 
 	var Km3 = make([]byte, 32)
 	if _, err := io.ReadFull(kdf, Km3); err != nil {
 		panic(err)
 	}
 
-	fmt.Println(Km3)
+	fmt.Println("Km3 = ")
+	fmt.Println( hex.EncodeToString(Km3))
 
 	var mac1 = computeHMac(Km3, XCrypt)
-	msg2.Mac1 = mac1
+	msg2.Mac1 = hex.EncodeToString(mac1)
 
-	var NonceSHexStr =hex.EncodeToString(NonceS)
+	fmt.Println("mac1 = ")
+	fmt.Println( hex.EncodeToString(mac1))
 
 	session := &AuthServerSession{
 		SK: SK,
 		Km2: Km2,
 		Km3: Km3,
-
 		NonceU: msg1.NonceU,
-		NonceS: NonceSHexStr,
-
+		NonceS: hex.EncodeToString(NonceS),
 		EphemeralPrivS: &EPrivateS,
 		EphemeralPubS: &EPubS,
-
 		user: user,
 		XCrypt: XCrypt,
 	}

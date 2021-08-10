@@ -46,8 +46,8 @@ type PwRegMsg1 struct {
 // PwRegMsg2 is the second message in password registration. Sent from server to
 // client.
 type PwRegMsg2 struct {
-	B     Point
-	PubS  Point
+	B     *Point
+	PubS  *Point
 }
 
 // PwRegMsg3 is the third and final message in password registration. Sent from
@@ -71,7 +71,7 @@ func PwReg(pubS *ECPoint, msg1 PwRegMsg1) (*PwRegServerSession, PwRegMsg2, error
 		Username: msg1.Username,
 		K:        k,
 	}
-	msg2 := PwRegMsg2{B: Point{X: b.X.String(), Y: b.Y.String()}, PubS: Point{X: b.X.String(), Y: b.Y.String()}}
+	msg2 := PwRegMsg2{B: &Point{X: b.X.String(), Y: b.Y.String()}, PubS: &Point{X: pubS.X.String(), Y: pubS.Y.String()}}
 	return session, msg2, nil
 }
 

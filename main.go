@@ -138,19 +138,24 @@ func handleAuth(r *bufio.Reader, w *bufio.Writer) error {
 	}
 	fmt.Println(user)
 
-	/*session, msg2, err := opaque.Auth1(&privS, user, msg1)
+	session, msg2, err := opaque.Auth1(&privS, user, msg1)
 	if err != nil {
 		return err
 	}
+
+	fmt.Println(session)
 
 	data2, err := json.Marshal(msg2)
 	if err != nil {
 		return err
 	}
+
+	fmt.Println(string(data2))
+
 	if err := opaque.Write(w, data2); err != nil {
 		return err
 	}
-
+	/*
 	data3, err := opaque.Read(r)
 	if err != nil {
 		return err
