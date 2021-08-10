@@ -111,8 +111,14 @@ func Auth1(privS *ECPrivateKey, user *User, msg1 AuthMsg1) (*AuthServerSession, 
 	fmt.Println(len(msg1.A.X.Bytes()))
 	fmt.Println(len(msg1.A.Y.Bytes()))
 
+	var decodedNonceU,err2 = hex.DecodeString(msg1.NonceU)
+
+	if err2 != nil {
+		panic(err)
+	}
+
 	var XCrypt = append(msg1.A.X.Bytes(), msg1.A.Y.Bytes()...)
-	XCrypt = append(XCrypt, msg1.NonceU...)
+	XCrypt = append(XCrypt, decodedNonceU...)
 	XCrypt = append(XCrypt, []byte(msg1.Username)...)
 	XCrypt = append(XCrypt, msg1.EphemeralPubU.X.Bytes()...)
 	XCrypt = append(XCrypt, msg1.EphemeralPubU.Y.Bytes()...)
@@ -124,9 +130,21 @@ func Auth1(privS *ECPrivateKey, user *User, msg1 AuthMsg1) (*AuthServerSession, 
 	XCrypt = append(XCrypt, EPubS.Y.Bytes()...)
 
 	//Prepare common secret: session key, key for mac etc
-	var info = append([]byte("HMQVKeys"), msg1.NonceU...)
-	info = append(info, NonceS...)
-	info = append(info, []byte(msg1.Username)...)
+
+
+
+	var info = append([]byte("HMQVKeys"), decodedNonceU...)
+	//info = append(info, NonceS...)
+	//info = append(info, []byte(msg1.Username)...)
+
+	fmt.Println("msg1.NonceU = ")
+	fmt.Println(msg1.NonceU)
+
+	fmt.Println("XCrypt = ")
+	fmt.Println( hex.EncodeToString(XCrypt))
+
+	fmt.Println("info = ")
+	fmt.Println( hex.EncodeToString(info))
 
 	var Q1Input = append(msg1.EphemeralPubU.X.Bytes(), msg1.EphemeralPubU.Y.Bytes()...)
 	Q1Input = append(Q1Input, []byte("user")...)
@@ -138,6 +156,12 @@ func Auth1(privS *ECPrivateKey, user *User, msg1 AuthMsg1) (*AuthServerSession, 
 
 	var Q1 = sha256.Sum256(Q1Input)
 	var Q2 = sha256.Sum256(Q2Input)
+
+	fmt.Println("Q1 = ")
+	fmt.Println(hex.EncodeToString(Q1[:]))
+
+	fmt.Println("Q2 = ")
+	fmt.Println(hex.EncodeToString(Q2[:]))
 
 	var Q1Num = new(big.Int).SetBytes(Q1[:])
 	var EPrivSNum = new(big.Int).SetBytes(EPrivateS.PrivateKeyBytes[:])
@@ -156,6 +180,12 @@ func Auth1(privS *ECPrivateKey, user *User, msg1 AuthMsg1) (*AuthServerSession, 
 	if _, err := io.ReadFull(kdf, SK); err != nil {
 		panic(err)
 	}
+
+	fmt.Println("xIkms = ")
+	fmt.Println(xIkms)
+
+	fmt.Println("yIkms = ")
+	fmt.Println(yIkms)
 
 	fmt.Println("SK = ")
 	fmt.Println( hex.EncodeToString(SK))
