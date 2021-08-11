@@ -155,7 +155,7 @@ func handleAuth(r *bufio.Reader, w *bufio.Writer) error {
 	if err := opaque.Write(w, data2); err != nil {
 		return err
 	}
-	/*
+
 	data3, err := opaque.Read(r)
 	if err != nil {
 		return err
@@ -164,6 +164,7 @@ func handleAuth(r *bufio.Reader, w *bufio.Writer) error {
 	if err := json.Unmarshal(data3, &msg3); err != nil {
 		return err
 	}
+
 	sharedSecret, err := opaque.Auth3(session, msg3)
 	if err != nil {
 		return err
@@ -173,10 +174,13 @@ func handleAuth(r *bufio.Reader, w *bufio.Writer) error {
 		return err
 	}
 
-	fmt.Printf(string((sharedSecret)))
+	fmt.Printf(string(sharedSecret))
 
 	fmt.Printf("Authentication finished!")
 
+
+
+	/*
 	/*key := sharedSecret[:16]
 	toClient := "Hi client!"
 	fmt.Printf("Sending '%s'\n", toClient)
@@ -189,7 +193,6 @@ func handleAuth(r *bufio.Reader, w *bufio.Writer) error {
 	}
 	fmt.Printf("Received '%s'\n", plaintext)*/
 
-	fmt.Printf("Authentication finished!")
 
 	return nil
 }

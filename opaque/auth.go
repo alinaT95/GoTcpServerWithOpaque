@@ -72,7 +72,7 @@ type AuthMsg2 struct {
 // struct except to serialize and deserialize the struct when it's sent between
 // the peers in the authentication protocol.
 type AuthMsg3 struct {
-	Mac2 []byte
+	Mac2 string
 }
 
 
@@ -246,7 +246,12 @@ func Auth1(privS *ECPrivateKey, user *User, msg1 AuthMsg1) (*AuthServerSession, 
 // See also AuthInit, Auth1, and Auth2.
 func Auth3(sess *AuthServerSession, msg3 AuthMsg3) (secret []byte, err error) {
 	var data = append([]byte("Finish"), sess.XCrypt...)
-	if !verifyHMac(sess.Km3, data, msg3.Mac2) {
+	var mac2,err1 = hex.DecodeString(msg3.Mac2)
+	if err1 != nil {
+		panic(err)
+	}
+
+	if !verifyHMac(sess.Km3, data, mac2) {
 		return nil, errors.New("MAC mismatch")
 	}
 	return sess.SK, nil
