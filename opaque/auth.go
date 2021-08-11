@@ -117,6 +117,12 @@ func Auth1(privS *ECPrivateKey, user *User, msg1 AuthMsg1) (*AuthServerSession, 
 		panic(err)
 	}
 
+	var decodedEnvU,err3 = hex.DecodeString(msg2.EnvU)
+
+	if err3 != nil {
+		panic(err)
+	}
+
 	var XCrypt = append(msg1.A.X.Bytes(), msg1.A.Y.Bytes()...)
 	XCrypt = append(XCrypt, decodedNonceU...)
 	XCrypt = append(XCrypt, []byte(msg1.Username)...)
@@ -124,14 +130,12 @@ func Auth1(privS *ECPrivateKey, user *User, msg1 AuthMsg1) (*AuthServerSession, 
 	XCrypt = append(XCrypt, msg1.EphemeralPubU.Y.Bytes()...)
 	XCrypt = append(XCrypt, B.X.Bytes()...)
 	XCrypt = append(XCrypt, B.Y.Bytes()...)
-	XCrypt = append(XCrypt, msg2.EnvU...)
+	XCrypt = append(XCrypt, decodedEnvU...)
 	XCrypt = append(XCrypt, NonceS...)
 	XCrypt = append(XCrypt, EPubS.X.Bytes()...)
 	XCrypt = append(XCrypt, EPubS.Y.Bytes()...)
 
 	//Prepare common secret: session key, key for mac etc
-
-
 
 	var info = append([]byte("HMQVKeys"), decodedNonceU...)
 	//info = append(info, NonceS...)
@@ -168,17 +172,6 @@ func Auth1(privS *ECPrivateKey, user *User, msg1 AuthMsg1) (*AuthServerSession, 
 	var PrivSNum = new(big.Int).SetBytes(privS.PrivateKeyBytes[:])
 
 	var exp = big.NewInt(0).Add(EPrivSNum, big.NewInt(1).Mul(Q2Num, PrivSNum)).Bytes()
-
-/*	fmt.Println("user.PubU.X = ")
-	fmt.Println(user.PubU.X.String())
-	fmt.Println("user.PubU.Y = ")
-	fmt.Println(user.PubU.Y.String())
-
-
-	fmt.Println("EPubS.X = ")
-	fmt.Println(EPubS.X.String())
-	fmt.Println("user.PubU.Y = ")
-	fmt.Println(user.PubU.Y.String())*/
 
 	var xPubUQ2, yPubUQ2 = dhGroup.ScalarMult(user.PubU.X, user.PubU.Y, Q1[:])
 	var xSum, ySum = dhGroup.Add(msg1.EphemeralPubU.X, msg1.EphemeralPubU.Y, xPubUQ2, yPubUQ2)
