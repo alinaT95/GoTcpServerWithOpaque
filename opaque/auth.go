@@ -163,14 +163,25 @@ func Auth1(privS *ECPrivateKey, user *User, msg1 AuthMsg1) (*AuthServerSession, 
 	fmt.Println("Q2 = ")
 	fmt.Println(hex.EncodeToString(Q2[:]))
 
-	var Q1Num = new(big.Int).SetBytes(Q1[:])
+	var Q2Num = new(big.Int).SetBytes(Q2[:])
 	var EPrivSNum = new(big.Int).SetBytes(EPrivateS.PrivateKeyBytes[:])
 	var PrivSNum = new(big.Int).SetBytes(privS.PrivateKeyBytes[:])
 
-	var exp = big.NewInt(0).Add(EPrivSNum, big.NewInt(1).Mul(Q1Num, PrivSNum)).Bytes()
+	var exp = big.NewInt(0).Add(EPrivSNum, big.NewInt(1).Mul(Q2Num, PrivSNum)).Bytes()
 
-	var xPubUQ2, yPubUQ2 = dhGroup.ScalarMult(user.PubU.X, user.PubU.Y, Q2[:])
-	var xSum, ySum = dhGroup.Add(EPubS.X, EPubS.Y, xPubUQ2, yPubUQ2)
+/*	fmt.Println("user.PubU.X = ")
+	fmt.Println(user.PubU.X.String())
+	fmt.Println("user.PubU.Y = ")
+	fmt.Println(user.PubU.Y.String())
+
+
+	fmt.Println("EPubS.X = ")
+	fmt.Println(EPubS.X.String())
+	fmt.Println("user.PubU.Y = ")
+	fmt.Println(user.PubU.Y.String())*/
+
+	var xPubUQ2, yPubUQ2 = dhGroup.ScalarMult(user.PubU.X, user.PubU.Y, Q1[:])
+	var xSum, ySum = dhGroup.Add(msg1.EphemeralPubU.X, msg1.EphemeralPubU.Y, xPubUQ2, yPubUQ2)
 	var xIkms, yIkms = dhGroup.ScalarMult(xSum, ySum, exp)
 	var secret = append(xIkms.Bytes(), yIkms.Bytes()...)
 
