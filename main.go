@@ -179,21 +179,6 @@ func handleAuth(r *bufio.Reader, w *bufio.Writer) error {
 	fmt.Printf("Authentication finished!")
 
 
-
-	/*
-	/*key := sharedSecret[:16]
-	toClient := "Hi client!"
-	fmt.Printf("Sending '%s'\n", toClient)
-	if err := opaque.EncryptAndWrite(w, key, toClient); err != nil {
-		return err
-	}
-	plaintext, err := opaque.ReadAndDecrypt(r, key)
-	if err != nil {
-		return err
-	}
-	fmt.Printf("Received '%s'\n", plaintext)*/
-
-
 	return nil
 }
 
