@@ -106,11 +106,6 @@ func Auth1(privS *ECPrivateKey, user *User, msg1 AuthMsg1) (*AuthServerSession, 
 
 	msg2.NonceS = hex.EncodeToString(NonceS[:])
 
-	//XCrypt is a message for signing
-
-	fmt.Println(len(msg1.A.X.Bytes()))
-	fmt.Println(len(msg1.A.Y.Bytes()))
-
 	var decodedNonceU,err2 = hex.DecodeString(msg1.NonceU)
 
 	if err2 != nil {
@@ -141,7 +136,7 @@ func Auth1(privS *ECPrivateKey, user *User, msg1 AuthMsg1) (*AuthServerSession, 
 	//info = append(info, NonceS...)
 	//info = append(info, []byte(msg1.Username)...)
 
-	fmt.Println("msg1.NonceU = ")
+	fmt.Println("NonceU = ")
 	fmt.Println(msg1.NonceU)
 
 	fmt.Println("XCrypt = ")
